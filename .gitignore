@@ -4,3 +4,5 @@
 /testcrypto
 /testspeed
 /testx509
+/zig-out
+/.zig-cache
