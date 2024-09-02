@@ -336,18 +336,24 @@ pub fn build(b: *std.Build) void {
     bearssl.addIncludePath(b.path("src/"));
     bearssl.addIncludePath(b.path("inc/"));
 
-    bearssl.addCSourceFiles(.{ .files = aead_src });
-    bearssl.addCSourceFiles(.{ .files = codec_src });
-    bearssl.addCSourceFiles(.{ .files = ec_src });
-    bearssl.addCSourceFiles(.{ .files = hash_src });
-    bearssl.addCSourceFiles(.{ .files = int_src });
-    bearssl.addCSourceFiles(.{ .files = kdf_src });
-    bearssl.addCSourceFiles(.{ .files = mac_src });
-    bearssl.addCSourceFiles(.{ .files = rand_src });
-    bearssl.addCSourceFiles(.{ .files = rsa_src });
-    bearssl.addCSourceFiles(.{ .files = ssl_src });
-    bearssl.addCSourceFiles(.{ .files = symcipher_src });
-    bearssl.addCSourceFiles(.{ .files = x509_src });
+    const flags = &.{
+        "-W",
+        "-Wall",
+        "-fPIC",
+    };
+
+    bearssl.addCSourceFiles(.{ .files = aead_src, .flags = flags });
+    bearssl.addCSourceFiles(.{ .files = codec_src, .flags = flags });
+    bearssl.addCSourceFiles(.{ .files = ec_src, .flags = flags });
+    bearssl.addCSourceFiles(.{ .files = hash_src, .flags = flags });
+    bearssl.addCSourceFiles(.{ .files = int_src, .flags = flags });
+    bearssl.addCSourceFiles(.{ .files = kdf_src, .flags = flags });
+    bearssl.addCSourceFiles(.{ .files = mac_src, .flags = flags });
+    bearssl.addCSourceFiles(.{ .files = rand_src, .flags = flags });
+    bearssl.addCSourceFiles(.{ .files = rsa_src, .flags = flags });
+    bearssl.addCSourceFiles(.{ .files = ssl_src, .flags = flags });
+    bearssl.addCSourceFiles(.{ .files = symcipher_src, .flags = flags });
+    bearssl.addCSourceFiles(.{ .files = x509_src, .flags = flags });
 
     bearssl.installHeadersDirectory(
         b.path("inc/"),
