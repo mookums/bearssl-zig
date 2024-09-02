@@ -320,9 +320,198 @@ const x509_src = &.{
     //"src/x509/x509_minimal.t0",
 };
 
-pub fn build(b: *std.Build) void {
+const MacroPair = struct {
+    mode: ?bool,
+    macro_name: []const u8,
+};
+
+pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+
+    var macro_list = std.ArrayList(MacroPair).init(b.allocator);
+    defer macro_list.deinit();
+    {
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_64",
+                "When enabled, 64-bit integers are assumed to be efficient",
+            ),
+            .macro_name = "BR_64",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_LOWMUL",
+                "When enabled, low multiplication of 32 bits are assumed to be efficient",
+            ),
+            .macro_name = "BR_LOWMUL",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_SLOW_MUL",
+                "When enabled, multiplications are assumed to be substationally slow",
+            ),
+            .macro_name = "BR_SLOW_MUL",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_SLOW_MUL15",
+                "When enabled, short multiplications are assumed to be substationally slow",
+            ),
+            .macro_name = "BR_SLOW_MUL15",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_CT_MUL31",
+                "When enabled, multiplications of 31 bit values use an alternate impl",
+            ),
+            .macro_name = "BR_CT_MUL31",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_CT_MUL15",
+                "When enabled, multiplications of 15 bit values use an alternate impl",
+            ),
+            .macro_name = "BR_CT_MUL15",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_NO_ARITH_SHIFT",
+                "When enabled, arithmetic right shifts are slower but avoids implementation-defined behavior",
+            ),
+            .macro_name = "BR_NO_ARITH_SHIFT",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_RDRAND",
+                "When enabled, the SSL engine will use RDRAND opcode to obtain quality randomness",
+            ),
+            .macro_name = "BR_RDRAND",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_USE_RANDOM",
+                "When enabled, the SSL engine will use /dev/urandom to obtain quality randomness",
+            ),
+            .macro_name = "BR_USE_RANDOM",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_USE_WIN32_RAND",
+                "When enabled, the SSL engine will use Win32 (CryptoAPI) to obtain quality randomness",
+            ),
+            .macro_name = "BR_USE_WIN32_RAND",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_USE_UNIX_TIME",
+                "When enabled, the X.509 validation engine uses time() and assumes Unix Epoch",
+            ),
+            .macro_name = "BR_USE_UNIX_TIME",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_USE_WIN32_TIME",
+                "When enabled, the X.509 validation engine uses GetSystemTimeAsFileTime()",
+            ),
+            .macro_name = "BR_USE_WIN32_TIME",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_ARMEL_CORTEXM_GCC",
+                "When enabled, some operations are replaced with inline assembly. Used only when target arch is ARM (thumb), endianness is little, and compiler is GCC or GCC compatible (for inline asm)",
+            ),
+            .macro_name = "BR_ARMEL_CORTEXM_GCC",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_AES_X86NI",
+                "When enabled, the AES implementation using the x86 \"NI\" instructions will be compiled",
+            ),
+            .macro_name = "BR_AES_X86NI",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_SSE2",
+                "When enabled, SSE2 instrinsics will be used for some algorithm implementations",
+            ),
+            .macro_name = "BR_SSE2",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_POWER8",
+                "When enabled, the AES implementation using the POWER ISA 2.07 opcodes is compiled",
+            ),
+            .macro_name = "BR_POWER8",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_INT128",
+                "When enabled, 'unsigned __int64' and 'unsigned __128' types will be used for 64x64->128 mul",
+            ),
+            .macro_name = "BR_INT128",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_UMUL128",
+                "When enabled, '_umul128()' and '_addcarry_u64()' instrincts will be used for 64x64->128 mul",
+            ),
+            .macro_name = "BR_UMUL128",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_LE_UNALIGNED",
+                "When enabled, the current architecture is assumed to use little-endian with little penalty to unaligned access",
+            ),
+            .macro_name = "BR_LE_UNALIGNED",
+        });
+
+        try macro_list.append(.{
+            .mode = b.option(
+                bool,
+                "BR_BE_UNALIGNED",
+                "When enabled, the current architecture is assumed to use big-endian with little penalty to unaligned access",
+            ),
+            .macro_name = "BR_BE_UNALIGNED",
+        });
+    }
 
     const bearssl = b.addStaticLibrary(.{
         .name = "bearssl",
@@ -335,6 +524,15 @@ pub fn build(b: *std.Build) void {
 
     bearssl.addIncludePath(b.path("src/"));
     bearssl.addIncludePath(b.path("inc/"));
+
+    for (macro_list.items) |item| {
+        if (item.mode) |mode| {
+            bearssl.root_module.addCMacro(
+                item.macro_name,
+                try std.fmt.allocPrint(b.allocator, "{d}", .{@intFromBool(mode)}),
+            );
+        }
+    }
 
     const flags = &.{
         "-W",
